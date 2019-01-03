@@ -569,5 +569,9 @@ USER root
 RUN chown -R root:root $LFS/tools
 
 
+# copy scripts
+COPY [ "scripts/run-all.sh", "scripts/as-chroot-with-tools.sh", "$LFS/tools/" ]
+RUN chmod +x $LFS/tools/*.sh
 
-CMD bash
+# let's the party begin
+ENTRYPOINT [ "/tools/run-all.sh" ]
