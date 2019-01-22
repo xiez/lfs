@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 echo "Continue with chroot environment.."
+export MAKEFLAGS='-j 4'
 
 # 7.2 LFS-Bootscripts
 tar -xf /sources/lfs-bootscripts-*.tar.bz2 -C /tmp/ \
@@ -179,5 +180,90 @@ cat > /etc/sysconfig/rc.site <<"EOF"
 #FONT="lat0-16 -m 8859-15"
 #LEGACY_CHARSET=
 EOF
+
+# 7.7 Bash Shell Startup Files
+# TODO
+
+# 7.8 /etc/inputrc file
+cat > /etc/inputrc <<"EOF"
+# Modified by Chris Lynn <roryo@roryo.dynup.net>
+# Allow the command prompt to wrap to the next line
+set horizontal-scroll-mode Off
+# Enable 8bit input
+set meta-flag On
+set input-meta On
+# Turns off 8th bit stripping
+set convert-meta Off
+# Keep the 8th bit for display
+set output-meta On
+# none, visible or audible
+set bell-style none
+# All of the following map the escape sequence of the value
+# contained in the 1st argument to the readline specific functions
+"\eOd": backward-word
+"\eOc": forward-word
+# for linux console
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+"\e[5~": beginning-of-history
+"\e[6~": end-of-history
+"\e[3~": delete-char
+"\e[2~": quoted-insert
+# for xterm
+"\eOH": beginning-of-line
+"\eOF": end-of-line
+# for Konsole
+"\e[H": beginning-of-line
+"\e[F": end-of-line
+EOF
+
+cat > /etc/shells <<"EOF"
+/bin/sh
+/bin/bash
+EOF
+
+# 8.2 /etc/fstab file
+cat > /etc/fstab <<"EOF"
+# file system   mount-point   type      options               dump  fsck
+#                                                                   order
+
+/dev/ram        /             auto      defaults              1     1
+proc            /proc         proc      nosuid,noexec,nodev   0     0
+sysfs           /sys          sysfs     nosuid,noexec,nodev   0     0
+devpts          /dev/pts      devpts    gid=5,mode=620        0     0
+tmpfs           /run          tmpfs     defaults              0     0
+devtmpfs        /dev          devtmpfs  mode=0755,nosuid      0     0
+
+EOF
+
+# 8.3 Linux kernel
+tar -xf /sources/linux-*.tar.xz -C /tmp/ \
+  && mv /tmp/linux-* /tmp/linux \
+  && pushd /tmp/linux
+
+make mrproper
+
+make defconfig
+make
+make modules_install
+
+cp -iv arch/x86/boot/bzImage /boot/vmlinuz-4.18.5-lfs-8.3
+cp -iv System.map /boot/System.map-4.18.5
+cp -iv .config /boot/config-4.18.5
+
+install -d /usr/share/doc/linux-4.18.5
+cp -r Documentation/* /usr/share/doc/linux-4.18.5
+
+install -v -m755 -d /etc/modprobe.d
+cat > /etc/modprobe.d/usb.conf <<"EOF"
+install ohci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i ohci_hcd ; true
+install uhci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i uhci_hcd ; true
+EOF
+
+popd \
+  && rm -rf /tmp/linux
+
+# 8.4 GRUB
+# skip
 
 exit

@@ -570,7 +570,7 @@ RUN chown -R root:root $LFS/tools
 
 
 # copy scripts
-COPY [ "scripts/run-all.sh", "scripts/as-chroot-with-tools.sh", "$LFS/tools/" ]
+COPY [ "scripts/run-all.sh", "scripts/as-chroot-with-tools.sh", "scripts/as-chroot-with-usr.sh", "$LFS/tools/" ]
 RUN chmod +x $LFS/tools/*.sh
 
 # let's the party begin

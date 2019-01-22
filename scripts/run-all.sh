@@ -36,4 +36,49 @@ chroot "$LFS" /tools/bin/env -i                 \
   /bin/bash --login +h \
   -c "sh /tools/as-chroot-with-usr.sh"
 
- exec "$@"
+# iso image
+echo "Start building bootable image.."
+
+pushd /tmp
+mkdir isolinux
+
+wget https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
+tar -xf ./syslinux-*.tar.xz -C /tmp/
+mv /tmp/syslinux-6.03 /tmp/syslinux
+cp /tmp/syslinux/bios/core/isolinux.bin isolinux/isolinux.bin
+cp /tmp/syslinux/bios/com32/elflink/ldlinux/ldlinux.c32 isolinux/ldlinux.c32
+rm -rf /tmp/syslinux*
+
+cat > isolinux/isolinux.cfg <<"EOF"
+PROMT 0
+
+DEFAULT arch
+
+LABEL arch
+    KERNEL vmlinuz
+    APPEND initrd=ramdisk.img root=/dev/ram0 3
+EOF
+
+
+# IMAGE_SIZE=800000
+# LOOP=/dev/loop1
+# LOOP_DIR=$(pwd)/$LOOP
+# RAMDISK=$(pwd)/ramdisk
+
+# dd if=/dev/zero of=$RAMDISK bs=1k count=$IMAGE_SIZE
+# losetup $LOOP $RAMDISK
+# mke2fs -q -i 16384 -m 0 $LOOP $IMAGE_SIZE
+# [ -d $LOOP_DIR ] || mkdir -pv $LOOP_DIR
+# mount $LOOP $LOOP_DIR
+# rm -rf $LOOP_DIR/lost+found
+
+# pushd /mnt/lfs
+# cp -dpR $(ls -A | grep -Ev "sources|tools") $LOOP_DIR
+# popd
+
+
+
+
+
+
+exec "$@"
